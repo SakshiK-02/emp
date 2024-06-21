@@ -1,0 +1,611 @@
+Employee management system
+
+employee and admin login
+
+Admin can add employee info like name, mail , designation, etc.
+
+employee can see their data by login
+
+front end in react and back end in node and mysql
+
+in admin - name, email,password
+in employee - email, password
+
+
+//front end
+1..admin -> id, password -> Login -> add employee-> submit
+2...employee -> id, password -> login-> can see info add by admin
+
+
+//database 
+1..requires one table for storing employee info name, email, password
+
+2..then fetch the info from the table after employee login
+
+
+Node + React + Mysql
+
+database table -> entries -> then display
+
+
+
+/...........1.Index.js
+# getting html element by using id and storing them in variable of type const then render that const.
+
+
+Width=682
+Height=441
+
+
+C:\Program Files\MySQL\MySQL Server\mysql-8.3.0-winx64\bin
+
+Create the database to store our records
+Create the server connection to the db
+Define the endpoints for CRUD app
+Create react app and define the frontend
+Integrate the front end and backend
+
+projectname -> server ->config-> db.js
+
+
+//......2.index.js
+const express = require('express');
+const db = require('./config/db')
+const cors = require('cors')
+
+const app = express();
+const  PORT = 3002;
+app.use(cors());
+app.use(express.json())
+
+// Route to get all posts
+app.get("/api/get", (req,res)=>{
+db.query("SELECT * FROM posts", (err,result)=>{
+    if(err) {
+    console.log(err)
+    } 
+res.send(result)
+});   });
+
+// Route to get one post
+app.get("/api/getFromId/:id", (req,res)=>{
+
+const id = req.params.id;
+ db.query("SELECT * FROM posts WHERE id = ?", id, 
+ (err,result)=>{
+    if(err) {
+    console.log(err)
+    } 
+    res.send(result)
+    });   });
+
+// Route for creating the post
+app.post('/api/create', (req,res)=> {
+
+const username = req.body.userName;
+const title = req.body.title;
+const text = req.body.text;
+
+db.query("INSERT INTO posts (title, post_text, user_name) VALUES (?,?,?)",[title,text,username], (err,result)=>{
+   if(err) {
+   console.log(err)
+   } 
+   console.log(result)
+});   })
+
+// Route to like a post
+app.post('/api/like/:id',(req,res)=>{
+
+const id = req.params.id;
+db.query("UPDATE posts SET likes = likes + 1 WHERE id = ?",id, (err,result)=>{
+    if(err) {
+   console.log(err)   } 
+   console.log(result)
+    });    
+});
+
+// Route to delete a post
+
+app.delete('/api/delete/:id',(req,res)=>{
+const id = req.params.id;
+
+db.query("DELETE FROM posts WHERE id= ?", id, (err,result)=>{
+if(err) {
+console.log(err)
+        } }) })
+
+app.listen(PORT, ()=>{
+    console.log(`Server is running on ${PORT}`)
+})
+
+
+//...............
+//fetching in console but when enter manually in table
+db.connect(function (err) {
+  db.query("SELECT * FROM  Employeeinfo", function (err, result, fields) {
+    if (err) throw err;
+    console.log(result);
+  });
+});
+
+
+//.....new....addemployee.jsx
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
+
+const AddEmployee = () => {
+  const [employee, setEmployee] = useState({
+    id: "",
+    name: "",
+    email: "",
+    password: "",
+    salary: "",
+    address: "",
+    category_id: "",
+    add_to_project: [], // Change to array for multiple projects
+  });
+
+  const [category, setCategory] = useState([]);
+  const [project, setProject] = useState([]);
+  const [selectedProjects, setSelectedProjects] = useState([]); // State for selected projects
+
+  useEffect(() => {
+    axios
+      .get("http://localhost:3000/auth/category")
+      .then((result) => {
+        if (result.data.Status) {
+          setCategory(result.data.Result);
+        } else {
+          alert(result.data.Error);
+        }
+      })
+      .catch((err) => console.log(err));
+
+    axios
+      .get("http://localhost:3000/auth/project")
+      .then((result) => {
+        if (result.data.Status) {
+          setProject(result.data.Result);
+        } else {
+          alert(result.data.Error);
+        }
+      })
+      .catch((err) => console.log(err));
+  }, []);
+
+  const navigate = useNavigate();
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const employeeData = { ...employee, add_to_project: selectedProjects };
+    axios
+      .post("http://localhost:3000/auth/add_employee", employeeData)
+      .then((result) => {
+        if (result.data.Status) {
+          navigate("/dashboard/employee");
+          console.log(result);
+        } else {
+          alert(result.data.Error);
+        }
+      })
+      .catch((err) => console.log(err));
+  };
+
+  return (
+    <div className="d-flex justify-content-center align-items-center mt-3">
+      <div className="p-3 rounded w-50 border">
+        <h3 className="text-center">Add Employee</h3>
+        <form className="row g-1 " onSubmit={handleSubmit}>
+          <div className="col-12">
+            <label htmlFor="inputId" className="form-label mt-2">
+              ID
+            </label>
+            <input
+              type="text"
+              className="form-control rounded-0"
+              id="inputId"
+              placeholder="Enter ID"
+              required
+              onChange={(e) => setEmployee({ ...employee, id: e.target.value })}
+            />
+          </div>
+
+          <div className="col-12">
+            <label htmlFor="inputName" className="form-label mt-2">
+              Name
+            </label>
+            <input
+              type="text"
+              className="form-control rounded-0"
+              id="inputName"
+              placeholder="Enter Name"
+              required
+              onChange={(e) => setEmployee({ ...employee, name: e.target.value })}
+            />
+          </div>
+
+          <div className="col-12">
+            <label htmlFor="inputEmail" className="form-label mt-2">
+              Email
+            </label>
+            <input
+              type="email"
+              className="form-control rounded-0"
+              id="inputEmail"
+              placeholder="Enter Email"
+              required
+              onChange={(e) => setEmployee({ ...employee, email: e.target.value })}
+            />
+          </div>
+
+          <div className="col-12">
+            <label htmlFor="inputPassword" className="form-label mt-2">
+              Password
+            </label>
+            <input
+              type="password"
+              className="form-control rounded-0"
+              id="inputPassword"
+              placeholder="Enter Password"
+              required
+              onChange={(e) => setEmployee({ ...employee, password: e.target.value })}
+            />
+          </div>
+
+          <div className="col-12">
+            <label htmlFor="inputSalary" className="form-label mt-2">
+              Salary
+            </label>
+            <input
+              type="text"
+              className="form-control rounded-0"
+              id="inputSalary"
+              placeholder="Enter Salary"
+              required
+              onChange={(e) => setEmployee({ ...employee, salary: e.target.value })}
+            />
+          </div>
+
+          <div className="col-12">
+            <label htmlFor="inputAddress" className="form-label mt-2">
+              Address
+            </label>
+            <input
+              type="text"
+              className="form-control rounded-0"
+              id="inputAddress"
+              placeholder="Enter Address"
+              required
+              onChange={(e) => setEmployee({ ...employee, address: e.target.value })}
+            />
+          </div>
+
+          <div className="col-12">
+            <label htmlFor="category" className="form-label">
+              Category
+            </label>
+            <select
+              name="category"
+              id="category"
+              className="form-select"
+              onChange={(e) => setEmployee({ ...employee, category_id: e.target.value })}
+            >
+              {category.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="col-12">
+            <label htmlFor="project" className="form-label">
+              Projects
+            </label>
+            <select
+              name="project"
+              id="project"
+              className="form-select"
+              multiple
+              onChange={(e) => {
+                const selectedOptions = Array.from(e.target.selectedOptions).map((option) => option.value);
+                setSelectedProjects(selectedOptions);
+              }}
+            >
+              {project.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <button className="btn btn-primary w-100 rounded-0 mt-3">
+            Add Employee
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+export default AddEmployee;
+
+//...............addemployee.jsx old
+// import React from "react";
+// import { useState, useEffect } from "react";
+// import axios from "axios";
+// import { useNavigate } from "react-router-dom";
+
+// const AddEmployee = () => {
+//   const [employee, setEmployee] = useState({
+//     id: "",
+//     name: "",
+//     email: "",
+//     password: "",
+//     salary: "",
+//     address: "",
+//     category_id: "",
+//     add_to_project: "",
+//   });
+
+//   const [category, setCategory] = useState([]);
+
+//   useEffect(() => {
+//     axios
+//       .get("http://localhost:3000/auth/category")
+//       .then((result) => {
+//         if (result.data.Status) {
+//           setCategory(result.data.Result);
+//         } else {
+//           alert(result.data.Error);
+//         }
+//       })
+//       .catch((err) => console.log(err));
+//   }, []);
+
+//   const [project, setProject] = useState([]);
+//   const [selectedProject, setSelectedProject] = useState([]);
+
+//   useEffect(() => {
+//     axios
+//       .get("http://localhost:3000/auth/project")
+//       .then((result) => {
+//         if (result.data.Status) {
+//           setProject(result.data.Result);
+//         } else {
+//           alert(result.data.Error);
+//         }
+//       })
+//       .catch((err) => console.log(err));
+//   }, []);
+
+//   const navigate = useNavigate();
+
+//   const handleSubmit = (e) => {
+//     e.preventDefault();
+//     // const employee = { ...employee, project: selectedProject };
+//     axios
+//       .post("http://localhost:3000/auth/add_employee", employee)
+//       .then((result) => {
+//         if (result.data.Status) {
+//           navigate("/dashboard/employee");
+//           // console.log(result);
+//         } else {
+//           alert(result.data.Error);
+//         }
+//       })
+//       .catch((err) => console.log(err));
+//   };
+
+//   return (
+//     <div className="d-flex justify-content-center align-items-center mt-3">
+//       <div className="p-3 rounded w-50 border">
+//         <h3 className="text-center">Add Employee</h3>
+//         <form className="row g-1 " onSubmit={handleSubmit}>
+//           {/* <div className="col-12">
+//             <label htmlFor="inputName" className="form-label mt-2">
+//               Name
+//             </label>
+//             <input
+//               type="text"
+//               className="form-control rounded-0"
+//               id="inputName"
+//               placeholder="Enter name"
+//               required
+//               onChange={(e) =>
+//                 setEmployee({ ...employee, name: e.target.value })
+//               }
+//             />
+//           </div>
+//            */}
+
+//           <div className="col-12">
+//             <label htmlFor="inputName" className="form-label mt-2">
+//               Id
+//             </label>
+//             <input
+//               type="text"
+//               className="form-control rounded-0"
+//               // id="inputName"
+//               placeholder="Enter Id"
+//               required
+//               onChange={(e) => setEmployee({ ...employee, id: e.target.value })}
+//             />
+//           </div>
+
+//           <div className="col-12">
+//             <label htmlFor="inputName" className="form-label mt-2">
+//               Name
+//             </label>
+//             <input
+//               type="text"
+//               className="form-control rounded-0"
+//               id="inputName"
+//               placeholder="Enter name"
+//               required
+//               onChange={(e) =>
+//                 setEmployee({ ...employee, name: e.target.value })
+//               }
+//             />
+//           </div>
+
+//           <div className="col-12">
+//             <label htmlFor="inputEmail" className="form-label mt-2">
+//               Email
+//             </label>
+//             <input
+//               type="email"
+//               className="form-control rounded-0"
+//               id="inputEmail"
+//               placeholder="Enter Email"
+//               required
+//               onChange={(e) =>
+//                 setEmployee({ ...employee, email: e.target.value })
+//               }
+//             />
+//           </div>
+
+//           <div className="col-12">
+//             <label htmlFor="inputPassword" className="form-label mt-2">
+//               Password
+//             </label>
+//             <input
+//               type="password"
+//               className="form-control rounded-0"
+//               id="inputPassword"
+//               placeholder="Enter password"
+//               required
+//               onChange={(e) =>
+//                 setEmployee({ ...employee, password: e.target.value })
+//               }
+//             />
+//           </div>
+
+//           <div className="col-12">
+//             <label htmlFor="inputSalary" className="form-label mt-2">
+//               Salary
+//             </label>
+//             <input
+//               type="text"
+//               className="form-control rounded-0"
+//               id="inputSalary"
+//               placeholder="Enter Salary"
+//               required
+//               onChange={(e) =>
+//                 setEmployee({ ...employee, salary: e.target.value })
+//               }
+//             />
+//           </div>
+
+//           <div className="col-12">
+//             <label htmlFor="inputAddress" className="form-label mt-2">
+//               Address
+//             </label>
+//             <input
+//               type="text"
+//               className="form-control rounded-0"
+//               id="inputAddress"
+//               placeholder="Enter Address"
+//               required
+//               onChange={(e) =>
+//                 setEmployee({ ...employee, address: e.target.value })
+//               }
+//             />
+//           </div>
+
+//           <div className="col-12">
+//             <label htmlFor="category" className="form-label">
+//               Category
+//             </label>
+//             <select
+//               name="category"
+//               id="category"
+//               className="form-select"
+//               onChange={(e) =>
+//                 setEmployee({ ...employee, category_id: e.target.value })
+//               }
+//             >
+//               {category.map((c) => (
+//                 <option key={c.id} value={c.id}>
+//                   {c.name}
+//                 </option>
+//               ))}
+//             </select>
+//           </div>
+
+//           {
+//             <div className="col-12">
+//               <label htmlFor="project" className="form-label">
+//                 Project
+//               </label>
+//               <select
+//                 name="project"
+//                 id="project"
+//                 className="form-select"
+//                 required
+//                 onChange={(e) =>
+//                   setEmployee({ ...employee, add_to_project: e.target.value })
+//                 }
+//               >
+//                 {project.map((p) => (
+//                   <option key={p.id} value={p.id}>
+//                     {p.name}
+//                   </option>
+//                 ))}
+//               </select>
+//             </div>
+//           }
+
+//           {/* <div className="col-12">
+//             <label htmlFor="project" className="form-label">
+//               Project
+//             </label>
+//             <select
+//               name="project"
+//               id="project"
+//               className="form-select"
+//               required
+//               multiple
+//               onChange={(e) => {
+//                 const selectedOptions = Array.from(
+//                   e.target.selectedOptions
+//                 ).map((option) => option.value);
+//                 setSelectedProject(selectedOptions);
+//               }}
+//             >
+//               {project.map((p) => {
+//                 <option key={p.id} value={p.name}>
+//                   {p.name}
+//                 </option>;
+//               })}
+//               </select> */}
+//           {/* setEmployee({ ...employee, add_to_project: e.target.value }) */}
+
+//           {/* //   } */}
+//           {/* //> */}
+//           {/* </div> */}
+
+//           {/* {project.map((p) => ( */}
+//           {/* <option key={p.id} value={p.id}> */}
+//           {/* {p.name} */}
+//           {/* </option> */}
+//           {/* // ))} */}
+//           {/* </select>
+//           </div> */}
+
+//           <button className="btn btn-primary w-100 rounded-0 mb-8 mt-5">
+//             Add Employee
+//           </button>
+//         </form>
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default AddEmployee;
+
+
+i want to add project section in form which will fetch project names from project table in mysql and we can select multiple projects in form using checkbox for one employee . it will get stored in employee table .give me such code
+
